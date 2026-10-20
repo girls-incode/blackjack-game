@@ -10,7 +10,7 @@ describe("formatResult", () => {
     );
 
     expect(formatResult(result)).toBe(
-      "Winner: Player\nDealer | 26 | S10,S6,SK\nPlayer | 17 | H10,H7",
+      "Winner: You\nDealer | 26 | S10,S6,SK\nYou | 17 | H10,H7",
     );
   });
 });

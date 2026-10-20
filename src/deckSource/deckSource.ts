@@ -49,7 +49,9 @@ export class HttpDeckSource implements DeckSource {
       !["http:", "https:"].includes(parsed.protocol) ||
       !parsed.hostname
     ) {
-      throw new ConfigError("Deck URL must be a valid http(s) URL");
+      throw new ConfigError(
+        "Deck URL must be a valid http(s) URL (from the command line or DECK_URL)",
+      );
     }
 
     if (parsed.username || parsed.password) {

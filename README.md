@@ -2,7 +2,7 @@
 
 A command-line game of blackjack between a player and a dealer, written in TypeScript. The deck is fetched as JSON over HTTP, one round is played, and the result is printed.
 
-<img src="docs/blackjack-round.svg" alt="Blackjack round: Dealer 27, Player 19, Player wins" width="100%"/>
+<img src="docs/blackjack-round.svg" alt="Blackjack round: Dealer 27, You 19, You wins" width="100%"/>
 
 ## The game
 
@@ -23,7 +23,7 @@ Two players: the Player and the Dealer. One round is played with a deck fetched 
 
 ### Rules
 
-- The Player draws two cards first, then the Dealer draws two.
+- The Player (named at startup) draws two cards first, then the Dealer draws two.
 - Blackjack is 21 with exactly two cards, so it can only happen on the initial draw.
   - If both have blackjack, the Dealer wins.
   - If only one has blackjack, that side wins and the round ends.
@@ -39,9 +39,9 @@ Two players: the Player and the Dealer. One round is played with a deck fetched 
 - Suits are written as `H`, `S`, `C`, `D`, followed by the card value as received from the deck, so the seven of spades is `S7`.
 
 ```
-Winner: Player
+Winner: You
 Dealer | 27 | S7,S10,CJ
-Player | 19 | D2,H2,C6,H9
+You | 19 | D2,H2,C6,H9
 ```
 
 ### Examples
@@ -53,9 +53,9 @@ Full round, the Dealer busts:
 Input deck: `D2,H2,S7,S10,C6,H9,CJ`
 
 ```
-Winner: Player
+Winner: You
 Dealer | 27 | S7,S10,CJ
-Player | 19 | D2,H2,C6,H9
+You | 19 | D2,H2,C6,H9
 ```
 
 Player blackjack:
@@ -63,9 +63,9 @@ Player blackjack:
 Input deck: `HA,HK,S9,S8`
 
 ```
-Winner: Player
+Winner: You
 Dealer | 17 | S9,S8
-Player | 21 | HA,HK
+You | 21 | HA,HK
 ```
 
 Dealer blackjack:
@@ -75,7 +75,7 @@ Input deck: `H9,H8,SA,SQ`
 ```
 Winner: Dealer
 Dealer | 21 | SA,SQ
-Player | 17 | H9,H8
+You | 17 | H9,H8
 ```
 
 Both have blackjack. The project rules give the win to the Dealer:
@@ -85,7 +85,7 @@ Input deck: `HA,HK,SA,SQ`
 ```
 Winner: Dealer
 Dealer | 21 | SA,SQ
-Player | 21 | HA,HK
+You | 21 | HA,HK
 ```
 
 Player busts:
@@ -95,7 +95,7 @@ Input deck: `H10,H6,S2,S3,HK`
 ```
 Winner: Dealer
 Dealer | 5 | S2,S3
-Player | 26 | H10,H6,HK
+You | 26 | H10,H6,HK
 ```
 
 The Dealer busts:
@@ -103,9 +103,9 @@ The Dealer busts:
 Input deck: `H10,H7,S10,S6,SK`
 
 ```
-Winner: Player
+Winner: You
 Dealer | 26 | S10,S6,SK
-Player | 17 | H10,H7
+You | 17 | H10,H7
 ```
 
 ## Requirements
@@ -135,12 +135,46 @@ pnpm start                      # uses the default deck URL
 pnpm start <deck-url>           # uses the given deck URL
 ```
 
+The game first asks `Enter your name:`. Your name appears in the `Winner:` line and on your hand's line, in place of the default `You`. The prompt is written to stderr, so stdout holds only the result. If no name is entered (empty line, closed input, or the name "Dealer"), the name defaults to `You`. A `|` in the name is removed.
+
+pnpm prints its own banner before the result; use `pnpm --silent start` or `node dist/main.js` for clean output.
+
+## Logging and observability
+
+All output goes through a `Logger` (`src/logging/logger.ts`), an interface with two methods:
+
+- `info(message)`: the game result. The console logger writes it to stdout.
+- `error(message, error?)`: a failure, reported by `handleError`. The console logger writes the message to stderr; the process exits with code 1 for expected errors and 2 for unexpected ones.
+
+To send output to a monitoring tool such as Sentry or Datadog, write an object that implements `Logger`:
+
+```ts
+const sentryLogger: Logger = {
+  info: (message) => console.log(message),
+  error: (message, error) => Sentry.captureException(error ?? message),
+};
+```
+
+Then use it in the entry point of `src/main.ts`:
+
+```ts
+void run({ logger: sentryLogger }).catch((err) => {
+  process.exitCode = handleError(err, sentryLogger);
+});
+```
+
 ## Project layout
 
 ```
 src/
 ├── main.ts                 # entry point: reads the URL, fetches the deck, plays, prints
 ├── main.test.ts            # entry-point tests
+├── playerName.ts           # asks for and cleans the player's name
+├── playerName.test.ts
+├── logging/
+│   ├── logger.ts            # Logger interface
+│   ├── logger.test.ts
+│   └── index.ts
 ├── game/
 │   ├── game.ts             # round rules
 │   ├── game.test.ts
@@ -163,5 +197,5 @@ src/
 │   ├── handleError.ts       # top-level error handling
 │   ├── index.ts             # error-module exports
 │   └── errors.test.ts       # error-handling tests
-└── testing/                 # shared test helpers (cards and HTTP responses)
+└── testing/                 # shared test helpers (cards, HTTP responses, fake logger)
 ```

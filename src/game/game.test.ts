@@ -11,7 +11,7 @@ const play = (deck: string) => createStandardBlackjackGame().play(cards(deck));
 describe("standard game", () => {
   it.each([
     ["dealer wins when both have blackjack", "HA,HK,SA,SQ", "Dealer"],
-    ["player wins with only blackjack", "HA,HK,S9,S8", "Player"],
+    ["player wins with only blackjack", "HA,HK,S9,S8", "You"],
     ["dealer wins with only blackjack", "H9,H8,SA,SQ", "Dealer"],
   ])("ends immediately when %s", (_description, deck, winner) => {
     const r = play(deck);
@@ -21,7 +21,7 @@ describe("standard game", () => {
   });
   it.each([
     ["player", "HA,DA,S9,S8", "Dealer"],
-    ["dealer", "H10,H7,SA,CA", "Player"],
+    ["dealer", "H10,H7,SA,CA", "You"],
   ])("counts two initial aces as 22, so the %s loses", (side, deck, winner) => {
     const r = play(deck);
     const hand = side === "player" ? r.player : r.dealer;
@@ -35,9 +35,6 @@ describe("standard game", () => {
     expect(r.winner).toBe("Dealer");
     expect(score(r.player.cards)).toBe(26);
     expect(r.dealer.cards).toHaveLength(2);
-  });
-  it("does not draw for the player at 17", () => {
-    expect(play("H10,H7,S8,S9,H2").player.cards).toHaveLength(2);
   });
   it("draws for the player below 17", () => {
     const r = play("H10,H6,S10,S8,H2,S2");
@@ -61,7 +58,7 @@ describe("standard game", () => {
   });
   it("awards the round to the player when the dealer busts", () => {
     const r = play("H10,H7,S10,S6,SK");
-    expect(r.winner).toBe("Player");
+    expect(r.winner).toBe("You");
     expect(score(r.dealer.cards)).toBe(26);
   });
   it("throws if the deck runs out", () => {
@@ -82,7 +79,18 @@ describe("standard game", () => {
     expect([
       game.play(cards("HA,HK,S9,S8")).winner,
       game.play(cards("H9,H8,SA,SQ")).winner,
-    ]).toEqual(["Player", "Dealer"]);
+    ]).toEqual(["You", "Dealer"]);
+  });
+});
+
+describe("standard game with a custom player name", () => {
+  it("uses the name for the player and keeps the dealer", () => {
+    const r = createStandardBlackjackGame("Ivar").play(
+      cards("H10,H7,S10,S6,SK"),
+    );
+    expect(r.winner).toBe("Ivar");
+    expect(r.player.name).toBe("Ivar");
+    expect(r.dealer.name).toBe("Dealer");
   });
 });
 

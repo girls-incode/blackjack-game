@@ -13,5 +13,4 @@ export class DeckHttpError extends DeckError {}
 export class DeckFormatError extends DeckError {}
 export class InvalidCardError extends DeckError {}
 
-export class GameError extends AppError {}
-export class DeckExhaustedError extends GameError {}
+export class DeckExhaustedError extends DeckError {}

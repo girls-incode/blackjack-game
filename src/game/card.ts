@@ -24,6 +24,9 @@ export interface Card {
 }
 
 export const BLACKJACK_SCORE = 21;
+const FACE_CARD_VALUE = 10;
+const ACE_VALUE = 11;
+const FACE_VALUES: ReadonlySet<Value> = new Set<Value>(["J", "Q", "K"]);
 
 export const SUIT_SYMBOLS: Record<Suit, string> = {
   HEARTS: "H",
@@ -31,9 +34,7 @@ export const SUIT_SYMBOLS: Record<Suit, string> = {
   SPADES: "S",
   DIAMONDS: "D",
 };
-const FACE_VALUES: ReadonlySet<Value> = new Set<Value>(["J", "Q", "K"]);
-const FACE_CARD_VALUE = 10;
-const ACE_VALUE = 11;
+
 type CardRecord = { suit?: unknown; value?: unknown };
 
 const isCardRecord = (value: unknown): value is CardRecord =>
@@ -59,14 +60,16 @@ export const isBlackjack = (cards: readonly Card[]): boolean =>
 export const formatCard = (card: Card): string =>
   `${SUIT_SYMBOLS[card.suit]}${card.value}`;
 
+const isOneOf = <T extends string>(
+  options: readonly T[],
+  value: unknown,
+): value is T => options.some((option) => option === value);
+
 /** Returns whether an unknown value has the shape of a valid card. */
 export const isCard = (value: unknown): value is Card => {
   if (!isCardRecord(value)) return false;
 
   const { suit, value: rank } = value;
 
-  return (
-    SUITS.some((validSuit) => validSuit === suit) &&
-    VALUES.some((validValue) => validValue === rank)
-  );
+  return isOneOf(SUITS, suit) && isOneOf(VALUES, rank);
 };
