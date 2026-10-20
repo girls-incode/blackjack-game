@@ -106,4 +106,22 @@ describe("Game with custom players", () => {
     expect(r.dealer.name).toBe("House");
     expect(r.player.cards).toHaveLength(2);
   });
+
+  it.each([
+    ["the player scores higher", "H10,H8,S10,S6", "Bob"],
+    ["the scores tie", "H10,H8,S10,S8", "House"],
+  ])(
+    "compares final scores when the dealer never draws and %s",
+    (_description, deck, winner) => {
+      const standOn17 = new StandOnScoreStrategy(17);
+      const neverDraw = new StandOnScoreStrategy(0);
+
+      const r = new Game(
+        { name: "Bob", strategy: standOn17 },
+        { name: "House", strategy: neverDraw },
+      ).play(cards(deck));
+
+      expect(r.winner).toBe(winner);
+    },
+  );
 });

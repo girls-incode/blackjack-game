@@ -11,7 +11,7 @@ export interface PlayerConfig {
 /** Stores a player's name and cards during and after a round. */
 export interface PlayerState {
   name: string;
-  cards: Card[];
+  cards: readonly Card[];
 }
 
 /** Outcome of a game: the winner's name and both final hands. */
@@ -23,6 +23,12 @@ export interface GameResult {
 
 /** Which side of the table won a round. */
 type Side = "player" | "dealer";
+
+/** Internal hand that `Game` mutates while drawing. */
+type MutablePlayerState = {
+  name: string;
+  cards: Card[];
+};
 
 /**
  * Plays one round of blackjack between a player and a dealer.
@@ -45,7 +51,7 @@ export class Game {
    *    has it, the player wins.
    * 3. The player draws until their strategy stops them. Busting means the dealer wins.
    * 4. The dealer draws until their strategy stops them. If the dealer busts,
-   *    the player wins. Otherwise, the higher score wins.
+   *    the player wins. Otherwise, the higher score wins, and the dealer wins ties.
    *
    * @throws if the deck runs out of cards before the round ends.
    */
@@ -54,15 +60,15 @@ export class Game {
     const player = this.deal(this.playerConfig.name, deck);
     const dealer = this.deal(this.dealerConfig.name, deck);
     const winningSide = this.playRound(player, dealer, deck);
-    const sides: Record<Side, PlayerState> = { player, dealer };
+    const sides: Record<Side, MutablePlayerState> = { player, dealer };
 
     return { winner: sides[winningSide].name, dealer, player };
   }
 
   /** Runs the draw rules and returns which side won. */
   private playRound(
-    player: PlayerState,
-    dealer: PlayerState,
+    player: MutablePlayerState,
+    dealer: MutablePlayerState,
     deck: Deck,
   ): Side {
     // Dealer wins when both have blackjack.
@@ -73,17 +79,19 @@ export class Game {
     if (isBust(player.cards)) return "dealer";
 
     this.drawUntilDone(dealer, this.dealerConfig, score(player.cards), deck);
-    return isBust(dealer.cards) ? "player" : "dealer";
+    if (isBust(dealer.cards)) return "player";
+
+    return score(dealer.cards) >= score(player.cards) ? "dealer" : "player";
   }
 
   /** Deals the opening two cards. */
-  private deal(name: string, deck: Deck): PlayerState {
+  private deal(name: string, deck: Deck): MutablePlayerState {
     return { name, cards: [deck.draw(), deck.draw()] };
   }
 
   /** Gives the player cards until their strategy says stop or they bust. */
   private drawUntilDone(
-    state: PlayerState,
+    state: MutablePlayerState,
     config: PlayerConfig,
     opponentScore: number,
     deck: Deck,
