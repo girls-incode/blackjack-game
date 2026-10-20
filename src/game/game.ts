@@ -100,7 +100,7 @@ export class Game {
 
     while (
       !isBust(currentHand) &&
-      config.strategy.shouldDraw(currentHand, opponentScore)
+      config.strategy.shouldDraw([...currentHand], opponentScore)
     ) {
       currentHand.push(deck.draw());
     }

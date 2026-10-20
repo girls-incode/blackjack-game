@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { DeckExhaustedError } from "../errors";
 import { cards } from "../testing";
-import { formatCard, score } from "./card";
+import { type Card, formatCard, score } from "./card";
 import { Game } from "./game";
 import { createStandardBlackjackGame } from "./standardBlackjackGame";
 import { StandOnScoreStrategy } from "./strategy";
@@ -124,4 +124,19 @@ describe("Game with custom players", () => {
       expect(r.winner).toBe(winner);
     },
   );
+
+  it("does not let a strategy mutate the internal hand", () => {
+    const mutatingStrategy = {
+      shouldDraw(hand: readonly Card[]) {
+        (hand as Card[]).push(cards("HA")[0]);
+        return false;
+      },
+    };
+    const r = new Game(
+      { name: "Bob", strategy: mutatingStrategy },
+      { name: "House", strategy: new StandOnScoreStrategy(0) },
+    ).play(cards("H2,H3,S10,S6"));
+
+    expect(r.player.cards).toEqual(cards("H2,H3"));
+  });
 });
