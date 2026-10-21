@@ -112,10 +112,16 @@ The game prompts for your name, which replaces `You` in the result. If you leave
 
 ## Logging and observability
 
-All output goes through a `Logger` (`src/logging/logger.ts`), an interface with two methods:
+All output goes through a `Logger` (`src/logging/logger.ts`), an interface with two methods. The production implementation keeps the game result as plain text and uses Pino for structured failures:
 
-- `info(message)`: the game result. The console logger writes it to stdout.
-- `error(message, error?)`: a failure, reported by `handleError`. The console logger writes the message to stderr; the process exits with code 1 for expected errors and 2 for unexpected ones.
+- `info(message)`: the game result, written as plain text to stdout.
+- `error(message, error?)`: a failure, reported by `handleError`. Pino writes structured JSON to stderr, including the error details; the process exits with code 1.
+
+This keeps stdout suitable for displaying or piping the game result while stderr retains structured diagnostics, for example (fields abbreviated):
+
+```json
+{"level":50,"msg":"Error: deck request failed","err":{"type":"Error","message":"request failed"}}
+```
 
 To send output to a monitoring tool such as Sentry or Datadog, write an object that implements `Logger`:
 
@@ -144,7 +150,6 @@ src/
 ├── playerName.test.ts
 ├── logging/
 │   ├── logger.ts            # Logger interface
-│   ├── logger.test.ts
 │   └── index.ts
 ├── game/
 │   ├── game.ts             # round rules

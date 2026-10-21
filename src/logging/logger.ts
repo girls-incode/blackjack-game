@@ -1,10 +1,17 @@
+import pino from "pino";
+
 export interface Logger {
   info(message: string): void;
   error(message: string, error?: unknown): void;
 }
 
-/** Writes the result to stdout and failures to stderr. */
-export const consoleLogger: Logger = {
-  info: (message) => console.log(message),
-  error: (message) => console.error(message),
+const errorLogger = pino({}, process.stderr);
+
+export const pinoLogger: Logger = {
+  info: (message) => {
+    process.stdout.write(`${message}\n`);
+  },
+  error: (message, error) => {
+    errorLogger.error({ err: error }, message);
+  },
 };

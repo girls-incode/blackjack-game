@@ -2,7 +2,7 @@ import { type DeckSource, HttpDeckSource } from "./deckSource/deckSource";
 import { ConfigError, handleError } from "./errors";
 import { formatResult } from "./game/format";
 import { createStandardBlackjackGame } from "./game/standardBlackjackGame";
-import { consoleLogger, type Logger } from "./logging";
+import { type Logger, pinoLogger } from "./logging";
 import { promptPlayerName } from "./playerName";
 
 const DEFAULT_DECK_URL = "https://sandbox.getunleash.io/blackjack/shuffle";
@@ -31,7 +31,7 @@ export const run = async ({
   args = process.argv.slice(2),
   env = process.env,
   fetchFn = fetch,
-  logger = consoleLogger,
+  logger = pinoLogger,
   deckSource,
   promptName = promptPlayerName,
 }: RunOptions = {}): Promise<void> => {
@@ -46,6 +46,6 @@ export const run = async ({
 // Run the CLI only when this module is executed directly, not when imported by tests.
 if (import.meta.main) {
   void run().catch((err) => {
-    process.exitCode = handleError(err, consoleLogger);
+    process.exitCode = handleError(err, pinoLogger);
   });
 }
