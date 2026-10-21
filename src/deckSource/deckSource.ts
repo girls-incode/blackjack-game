@@ -27,9 +27,7 @@ const readJson = async (response: Response): Promise<unknown> => {
   try {
     return await response.json();
   } catch (err) {
-    if (isTimeoutError(err)) {
-      throw timeoutError(err);
-    }
+    if (isTimeoutError(err)) throw err;
     throw new DeckFormatError("Deck response was not valid JSON", {
       cause: err,
     });
@@ -50,7 +48,7 @@ export class HttpDeckSource implements DeckSource {
       !parsed.hostname
     ) {
       throw new ConfigError(
-        "Deck URL must be a valid http(s) URL (from the command line or DECK_URL)",
+        "Deck URL must be a valid http(s) URL",
       );
     }
 

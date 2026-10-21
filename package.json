@@ -11,6 +11,8 @@
     "build": "vite build",
     "prestart": "pnpm build",
     "start": "node --env-file-if-exists=.env dist/main.js",
+    "prestart:prod": "pnpm build >/dev/null",
+    "start:prod": "node --env-file-if-exists=.env dist/main.js",
     "typecheck": "tsc",
     "test": "vitest run",
     "format": "biome format --write .",

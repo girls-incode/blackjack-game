@@ -35,7 +35,6 @@ export const run = async ({
   deckSource,
   promptName = promptPlayerName,
 }: RunOptions = {}): Promise<void> => {
-  // Built first so a bad URL fails before the user is asked for a name.
   const source =
     deckSource ?? new HttpDeckSource(resolveDeckUrl(args, env), fetchFn);
   const playerName = await promptName();

@@ -1,54 +1,56 @@
 # Blackjack game
 
-A command-line game of blackjack between a player and a dealer, written in TypeScript. The deck is fetched as JSON over HTTP, one round is played, and the result is printed.
+A TypeScript command-line Blackjack game that fetches a deck over HTTP, plays a game between a named player and a dealer, and prints the result.
 
 <img src="docs/blackjack-round.svg" alt="Blackjack round: Dealer 27, You 19, You wins" width="100%"/>
 
 ## The game
 
-Two players: the Player and the Dealer. One round is played with a deck fetched from a URL.
+The game is played between a named Player and the Dealer using a deck fetched from a URL.
 
 ### Deck
 
-- A deck is a JSON list of card objects, e.g. `{"suit":"HEARTS","value":"5"}`.
-- `suit` is one of `HEARTS`, `CLUBS`, `SPADES`, `DIAMONDS`.
-- `value` is one of `2`, `3`, `4`, `5`, `6`, `7`, `8`, `9`, `10`, `J`, `Q`, `K`, `A`.
-- The deck is fetched with a `GET` from the URL given on the command line. Without a URL it defaults to `https://sandbox.getunleash.io/blackjack/shuffle`.
+Each card is represented as a JSON object:
+
+```json
+{"suit":"HEARTS","value":"5"}
+```
+
+- `suit`: `HEARTS`, `CLUBS`, `SPADES`, or `DIAMONDS`
+- `value`: `2`–`10`, `J`, `Q`, `K`, or `A`
+
+The deck is fetched with `GET` from the URL provided on the command line. If no URL is provided, the default is `https://sandbox.getunleash.io/blackjack/shuffle`.
 
 ### Card values
 
-- Face cards (J, Q, K) are worth 10.
-- Aces (A) are worth 11.
-- Number cards are worth their number.
+- Number cards are worth their face value.
+- Face cards (`J`, `Q`, `K`) are worth 10.
+- Aces (`A`) are worth 11.
 
 ### Rules
 
-- The Player (named at startup) draws two cards first, then the Dealer draws two.
-- Blackjack is 21 with exactly two cards, so it can only happen on the initial draw.
-  - If both have blackjack, the Dealer wins.
-  - If only one has blackjack, that side wins and the round ends.
-  - If neither has it, the round continues.
-- The Player draws until reaching 17 or more. A score above 21 is a bust and the Player loses, whatever happens to the Dealer.
-- If the Player has not busted, it is the Dealer's turn. The Dealer draws until having a higher score than the Player, or until bust (a score over 21).
+1. The Player, whose name is entered at startup, draws two cards first. The Dealer then draws two cards.
+2. If neither hand has blackjack after the initial draw, play continues.
+3. If both hands have blackjack, the Dealer wins.
+4. Blackjack only occurs on the initial draw and requires exactly two cards with a total score of 21.
+5. The Player draws until their score reaches 17 or higher. A score above 21 is a bust, and the Player loses.
+6. If the Player has not busted, the Dealer draws until their score is higher than the Player's or exceeds 21. If the Dealer busts, the Player wins.
 
 ### Output
 
-- The winner, prefixed with `Winner:`.
-- Then the Dealer's name, score and hand separated with `|`.
-- Then the Player's name, score and hand separated with `|`.
-- Suits are written as `H`, `S`, `C`, `D`, followed by the card value as received from the deck, so the seven of spades is `S7`.
+Cards are displayed using a one-letter suit followed by the value returned by the shuffle endpoint. The suit letters are `H` (hearts), `S` (spades), `C` (clubs), and `D` (diamonds); for example, the seven of spades is `S7`.
 
-```
-Winner: You
-Dealer | 27 | S7,S10,CJ
-You | 19 | D2,H2,C6,H9
-```
+The result is printed in this order:
+
+1. The winner, prefixed with `Winner:`
+2. The Dealer's name, score, and cards in hand, separated by `|`
+3. The Player's name, score, and cards in hand, separated by `|`
 
 ### Examples
 
 Cards are supplied in draw order: the Player's two cards, the Dealer's two cards, then any cards drawn during the round.
 
-Full round, the Dealer busts:
+1. Dealer busts
 
 Input deck: `D2,H2,S7,S10,C6,H9,CJ`
 
@@ -58,27 +60,7 @@ Dealer | 27 | S7,S10,CJ
 You | 19 | D2,H2,C6,H9
 ```
 
-Player blackjack:
-
-Input deck: `HA,HK,S9,S8`
-
-```
-Winner: You
-Dealer | 17 | S9,S8
-You | 21 | HA,HK
-```
-
-Dealer blackjack:
-
-Input deck: `H9,H8,SA,SQ`
-
-```
-Winner: Dealer
-Dealer | 21 | SA,SQ
-You | 17 | H9,H8
-```
-
-Both have blackjack. The project rules give the win to the Dealer:
+2. Both have blackjack so Dealer wins.
 
 Input deck: `HA,HK,SA,SQ`
 
@@ -88,7 +70,7 @@ Dealer | 21 | SA,SQ
 You | 21 | HA,HK
 ```
 
-Player busts:
+3. Player busts
 
 Input deck: `H10,H6,S2,S3,HK`
 
@@ -96,16 +78,6 @@ Input deck: `H10,H6,S2,S3,HK`
 Winner: Dealer
 Dealer | 5 | S2,S3
 You | 26 | H10,H6,HK
-```
-
-The Dealer busts:
-
-Input deck: `H10,H7,S10,S6,SK`
-
-```
-Winner: You
-Dealer | 26 | S10,S6,SK
-You | 17 | H10,H7
 ```
 
 ## Requirements
@@ -135,9 +107,8 @@ pnpm start                      # uses the default deck URL
 pnpm start <deck-url>           # uses the given deck URL
 ```
 
-The game first asks `Enter your name:`. Your name appears in the `Winner:` line and on your hand's line, in place of the default `You`. The prompt is written to stderr, so stdout holds only the result. If no name is entered (empty line, closed input, or the name "Dealer"), the name defaults to `You`. A `|` in the name is removed.
+The game prompts for your name, which replaces `You` in the result. If you leave it blank, close input, or enter `Dealer`, it defaults to `You`. The prompt goes to stderr; the result goes to stdout.
 
-pnpm prints its own banner before the result; use `pnpm --silent start` or `node dist/main.js` for clean output.
 
 ## Logging and observability
 
